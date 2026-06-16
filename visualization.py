@@ -223,17 +223,17 @@ def plot_results_table(all_results, save_path=None):
     """Summary table as a figure."""
     rows_data = []
     for name, r in all_results.items():
-        mejora = (r["t_center"] - r["Mejor"]) / r["t_center"] * 100
+        mejora = (r["t_center"] - r["best"]) / r["t_center"] * 100
         rows_data.append([
             name,
             f'{r["t_center"]:.3f}',
-            f'{r["Mejor"]:.3f}',
-            f'{r["Media"]:.3f}',
-            f'{r["Desv. Est."]:.4f}',
+            f'{r["best"]:.3f}',
+            f'{r["mean"]:.3f}',
+            f'{r["std"]:.4f}',
             f'{mejora:.2f}%',
         ])
 
-    cols = ["Circuito", "Centro (s)", "Mejor (s)", "Media (s)", "Desv. Est. (s)", "Improv."]
+    cols = ["Circuito", "Centro (s)", "Best (s)", "Mean (s)", "Std (s)", "Improv."]
 
     fig, ax = plt.subplots(figsize=(10, 1.2 + 0.5 * len(rows_data)), dpi=150)
     ax.axis("off")

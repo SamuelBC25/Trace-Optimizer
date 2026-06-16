@@ -20,15 +20,16 @@ from typing import Callable
 @dataclass
 class GAConfig:
     """Parámetros del Algoritmo Genético."""
-    pop_size:    int   = 50       # Tamaño de población
-    max_evals:   int   = 10_000   # Presupuesto de evaluaciones
-    pc:          float = 0.90     # Probabilidad de cruzamiento SBX
-    pm:          float = None     # Probabilidad de mutación (None → 1/N)
-    eta_c:       float = 5.0      # Índice de distribución SBX (Nc)
-    eta_m:       float = 20.0     # Índice de distribución mutación (Nm)
-    tournament_k: int  = 2        # Tamaño del torneo
-    seed:        int   = None     # Semilla aleatoria (None = aleatoria)
-    verbose:     bool  = True     # Imprimir progreso
+    pop_size:       int   = 50       # Tamaño de población
+    n_generations:  int   = 2000    # Número de generaciones
+    pc:             float = 0.90     # Probabilidad de cruzamiento SBX
+    pm:             float = None     # Probabilidad de mutación (None → 1/N)
+    eta_c:          float = 5.0      # Índice de distribución SBX (Nc)
+    eta_m:          float = 20.0     # Índice de distribución mutación (Nm)
+    tournament_k:   int  = 2         # Tamaño del torneo
+    seed:           int   = None     # Semilla aleatoria (None = aleatoria)
+    verbose:        bool  = True     # Imprimir progreso
+    max_evals:      int   = None     # Número máximo de evaluaciones
 
 # -----------------------------------------------------------------------------
 # ESTRUCTURA DE RESULTADOS
@@ -123,6 +124,7 @@ def run_ga(objective, lb, ub, config=None, callback=None):
     n   = len(lb)
     pm  = config.pm if config.pm is not None else 1.0 / n
 
+    max_evals = config.max_evals if config.max_evals is not None else config.n_generations * (config.pop_size - 1) + config.pop_size
     """
     Inicialización de la población.
     - Se genera una población aleatoria uniforme dentro de los límites.
