@@ -75,27 +75,8 @@ def main():
     """
     os.makedirs(OUTPUT, exist_ok=True)
 
-    """
-    Configuración del Algoritmo Genético:
-    - pop_size: tamaño de la población (30)
-    - max_evals: número máximo de evaluaciones (3000)
-    - pc: probabilidad de cruce (0.90)
-    - eta_c: distribución de cruce (5.0)
-    - eta_m: distribución de mutación (20.0)
-    - tournament_k: tamaño del torneo (2)
-    - seed: semilla para reproducibilidad (none = aleatoria) 
-    - verbose: mostrar progreso detallado (False)
-    """
-    ga_config = GAConfig(
-        pop_size     = 30,      # tamaño de la población
-        max_evals    = 3000,   # número máximo de evaluaciones (ajustable según tiempo disponible)
-        pc           = 0.90,    # probabilidad de cruce
-        eta_c        = 5.0,     # distribución de cruce (valores más altos = soluciones más similares a los padres)
-        eta_m        = 20.0,    # distribución de mutación (valores más altos = cambios más pequeños)
-        tournament_k = 2,       # tamaño del torneo (2 = selección binaria)
-        seed         = None,
-        verbose      = False,
-    )
+    # Configuración del Algoritmo Genético: se usan los valores por defecto
+    ga_config = GAConfig()
 
     # -- Cargar pistas --------------------------------------------------------
     print("\n" + "=" * 60)
