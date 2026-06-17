@@ -5,6 +5,7 @@ Conecta todos los módulos y ejecuta el pipeline completo:
 USO:
     python main.py
 
+
 1. Carga y visualiza las 5 pistas
 2. Para cada pista:
        a. Prepara geometría y puntos de control
@@ -76,7 +77,16 @@ def main():
     os.makedirs(OUTPUT, exist_ok=True)
 
     # Configuración del Algoritmo Genético: se usan los valores por defecto
-    ga_config = GAConfig()
+    ga_config = GAConfig(
+        pop_size     = 50,      # tamaño de la población
+        max_evals    = 10000,    # número máximo de evaluaciones (ajustable según tiempo disponible)
+        pc           = 0.90,    # probabilidad de cruce
+        eta_c        = 5.0,     # distribución de cruce (valores más altos = soluciones más similares a los padres)
+        eta_m        = 20.0,    # distribución de mutación (valores más altos = cambios más pequeños)
+        tournament_k = 2,       # tamaño del torneo (2 = selección binaria)
+        seed         = None,
+        verbose      = False,
+    )
 
     # -- Cargar pistas --------------------------------------------------------
     print("\n" + "=" * 60)

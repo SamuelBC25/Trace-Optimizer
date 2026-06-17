@@ -24,12 +24,12 @@ from track_model import (reconstruct_trajectory, lap_time, velocity_profile,
 # -----------------------------------------------------------------------------
 # PALETA DE COLORES
 # -----------------------------------------------------------------------------
-_BG       = "#1a1a2e"
+_BG       = "#ffffff"
 _TRACK    = "#3a3a5c"
-_BORDER_E = "#5c5c8a"
-_BORDER_I = "#5c5c8a"
-_CENTER   = "#888888"
-_RACING   = "#ff2800"
+_BORDER_E = "#0a0a0a"
+_BORDER_I = "#0a0a0a"
+_CENTER   = "#B7B400"
+_RACING   = "#ff260065"
 _ACCENT   = "#00d4ff"
 _TEXT     = "#e0e0e0"
 _GOLD     = "#ffd700"
