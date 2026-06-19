@@ -1,9 +1,9 @@
 """
 visualization.py — Módulo 3: Visualización y análisis de resultados
 ==================================================================
-Funciones para graficar pistas, trayectorias optimizadas, perfiles de velocidad
-y tablas comparativas de resultados. Estilo visual consistente y de alta calidad
-para presentaciones y análisis detallados.
+Versión optimizada para proyección: fondo blanco, colores de alto contraste,
+líneas gruesas y tipografía grande para máxima legibilidad en presentaciones.
+
 Funciones principales:
 - plot_track_result: Gráfica detallada de la pista con raceline optimizada.
 - plot_velocity_comparison: Perfil de velocidad comparativo entre centro y raceline.
@@ -21,168 +21,250 @@ from track_model import (reconstruct_trajectory, lap_time, velocity_profile,
                          track_length)
 
 
-# -----------------------------------------------------------------------------
-# PALETA DE COLORES
-# -----------------------------------------------------------------------------
-_BG       = "#ffffff"
-_TRACK    = "#3a3a5c"
-_BORDER_E = "#0a0a0a"
-_BORDER_I = "#0a0a0a"
-_CENTER   = "#B7B400"
-_RACING   = "#ff260065"
-_ACCENT   = "#00d4ff"
-_TEXT     = "#e0e0e0"
-_GOLD     = "#ffd700"
+# =============================================================================
+# PALETA DE ALTO CONTRASTE — OPTIMIZADA PARA PROYECTOR
+# =============================================================================
+# Fondo blanco con texto oscuro: máxima legibilidad bajo cualquier iluminación.
+# Colores saturados y bien separados en el espectro para que no se confundan.
 
+_BG        = "#FFFFFF"       # Fondo blanco limpio
+_TEXT      = "#1A1A1A"       # Texto negro/gris muy oscuro
+_GRID      = "#CCCCCC"       # Rejilla gris suave
+
+# Pista
+_TRACK     = "#D5D5D5"       # Superficie de asfalto (gris claro)
+_BORDER_E  = "#2C2C2C"       # Borde exterior (gris carbón)
+_BORDER_I  = "#2C2C2C"       # Borde interior (gris carbón)
+
+# Líneas principales — colores máximamente distinguibles
+_CENTER    = "#1565C0"       # Línea central: azul intenso
+_RACING    = "#D32F2F"       # Raceline optimizada: rojo intenso
+_ACCENT    = "#00838F"       # Acento para cajas informativas: teal oscuro
+_GOLD      = "#FF8F00"       # Marcador de salida/meta: ámbar
+
+# Velocidad
+_VEL_CENTER = "#1565C0"      # Perfil velocidad centro: mismo azul
+_VEL_OPT    = "#D32F2F"      # Perfil velocidad optima: mismo rojo
+_VEL_FILL_C = "#1565C0"      # Relleno centro
+_VEL_FILL_O = "#D32F2F"      # Relleno optimizada
+
+# Tabla
+_TABLE_HEADER  = "#1565C0"   # Encabezado tabla: azul
+_TABLE_ROW_A   = "#F5F5F5"   # Fila par: gris muy claro
+_TABLE_ROW_B   = "#E8E8E8"   # Fila impar: gris claro
+
+# =============================================================================
+# CONFIGURACIÓN GLOBAL DE MATPLOTLIB — PROYECTOR-FRIENDLY
+# =============================================================================
 plt.rcParams.update({
-    "figure.facecolor": _BG,
-    "axes.facecolor":   _BG,
-    "text.color":       _TEXT,
-    "axes.labelcolor":  _TEXT,
-    "xtick.color":      _TEXT,
-    "ytick.color":      _TEXT,
-    "font.family":      "sans-serif",
-    "font.size":        11,
+    "figure.facecolor":   _BG,
+    "axes.facecolor":     _BG,
+    "text.color":         _TEXT,
+    "axes.labelcolor":    _TEXT,
+    "axes.edgecolor":     "#666666",
+    "xtick.color":        _TEXT,
+    "ytick.color":        _TEXT,
+    "font.family":        "sans-serif",
+    "font.size":          13,          # Base más grande para proyección
+    "axes.titlesize":     18,
+    "axes.labelsize":     14,
+    "legend.fontsize":    12,
+    "xtick.labelsize":    11,
+    "ytick.labelsize":    11,
+    "lines.linewidth":    2.0,
+    "axes.linewidth":     1.2,
+    "grid.alpha":         0.3,
+    "grid.color":         _GRID,
 })
 
+
 def _close_loop(x, y):
+    """Cierra el circuito conectando el último punto con el primero."""
     return np.append(x, x[0]), np.append(y, y[0])
 
-# -----------------------------------------------------------------------------
+
+# =============================================================================
 # GRÁFICA DE PISTA CON RACELINE OPTIMIZADA
-# -----------------------------------------------------------------------------
+# =============================================================================
+
 def plot_track_result(geo, ctrl, u_opt, track_name, t_center, t_opt,
                       save_path=None):
     """
-    Publication-quality track plot with:
-      - Track surface (filled between borders)
-      - Exterior / interior borders
-      - Centerline (dashed)
-      - Optimized raceline (bold red)
-      - Time comparison box
+    Gráfica de pista de alta calidad para proyección:
+      - Superficie de pista (relleno entre bordes)
+      - Bordes exterior / interior (negro grueso)
+      - Línea central (azul, punteada)
+      - Raceline optimizada (rojo, sólida gruesa)
+      - Caja comparativa de tiempos
     """
     fig, ax = plt.subplots(figsize=(14, 10), dpi=150)
 
-    # -- Track surface --------------------------------------------------------
+    # -- Superficie de pista --------------------------------------------------
     ex, ey = _close_loop(geo["ext_x"], geo["ext_y"])
     ix, iy = _close_loop(geo["int_x"], geo["int_y"])
 
-    ax.fill(ex, ey, color=_TRACK, alpha=0.55, zorder=1)
+    ax.fill(ex, ey, color=_TRACK, alpha=0.7, zorder=1)
     ax.fill(ix, iy, color=_BG,    zorder=2)
 
-    # -- Borders --------------------------------------------------------------
-    ax.plot(ex, ey, color=_BORDER_E, lw=1.2, alpha=0.8, zorder=3,
-            label="Track borders")
-    ax.plot(ix, iy, color=_BORDER_I, lw=1.2, alpha=0.8, zorder=3)
+    # -- Bordes (gruesos, oscuros) --------------------------------------------
+    ax.plot(ex, ey, color=_BORDER_E, lw=2.0, alpha=0.9, zorder=3,
+            label="Bordes de pista")
+    ax.plot(ix, iy, color=_BORDER_I, lw=2.0, alpha=0.9, zorder=3)
 
-    # -- Centerline -----------------------------------------------------------
+    # -- Línea central (azul, punteada) ---------------------------------------
     ccx, ccy = _close_loop(geo["cx"], geo["cy"])
-    ax.plot(ccx, ccy, color=_CENTER, lw=1.4, ls="--", alpha=0.65, zorder=4,
-            label=f"Centerline  ({t_center:.3f} s)")
+    ax.plot(ccx, ccy, color=_CENTER, lw=2.5, ls="--", alpha=0.85, zorder=4,
+            label=f"Línea central  ({t_center:.3f} s)")
 
-    # -- Optimized raceline ---------------------------------------------------
+    # -- Raceline optimizada (rojo, sólida gruesa) ----------------------------
     tx, ty = reconstruct_trajectory(ctrl, u_opt)
     tx_c, ty_c = _close_loop(tx, ty)
-    ax.plot(tx_c, ty_c, color=_RACING, lw=2.4, alpha=0.95, zorder=5,
-            path_effects=[pe.Stroke(linewidth=4.0, foreground="#000000", alpha=0.35),
+    ax.plot(tx_c, ty_c, color=_RACING, lw=3.2, alpha=0.95, zorder=5,
+            path_effects=[pe.Stroke(linewidth=5.5, foreground="white", alpha=0.5),
                           pe.Normal()],
-            label=f"Optimized   ({t_opt:.3f} s)")
+            label=f"Optimizada   ({t_opt:.3f} s)")
 
-    # -- Start / finish marker ------------------------------------------------
-    ax.scatter(geo["cx"][0], geo["cy"][0], s=120, c=_GOLD, marker="D",
-               edgecolors="black", linewidths=0.8, zorder=7,
-               label="Start / Finish")
+    # -- Marcador de salida/meta ----------------------------------------------
+    ax.scatter(geo["cx"][0], geo["cy"][0], s=180, c=_GOLD, marker="D",
+               edgecolors="black", linewidths=1.2, zorder=7,
+               label="Salida / Meta")
 
-    # -- Time comparison box --------------------------------------------------
+    # -- Caja comparativa de tiempos ------------------------------------------
     mejora = (t_center - t_opt) / t_center * 100
     km = track_length(geo)
     box_text = (
-        f"Circuit length: {km:.2f} km\n"
-        f"-------------------------\n"
-        f"Centerline time:   {t_center:.3f} s\n"
-        f"Optimized time:    {t_opt:.3f} s\n"
-        f"-------------------------\n"
-        f"Improvement:  {mejora:.2f} %\n"
-        f"Time saved:   {t_center - t_opt:.3f} s"
+        f"Longitud: {km:.2f} km\n"
+        f"─────────────────────\n"
+        f"Tiempo central:    {t_center:.3f} s\n"
+        f"Tiempo optimizado: {t_opt:.3f} s\n"
+        f"─────────────────────\n"
+        f"Mejora:  {mejora:.2f} %\n"
+        f"Ahorro:  {t_center - t_opt:.3f} s"
     )
-    props = dict(boxstyle="round,pad=0.6", facecolor="#0d0d1a",
-                 edgecolor=_ACCENT, alpha=0.92, linewidth=1.5)
-    ax.text(0.02, 0.98, box_text, transform=ax.transAxes, fontsize=10.5,
+    props = dict(boxstyle="round,pad=0.6", facecolor="#FAFAFA",
+                 edgecolor=_ACCENT, alpha=0.95, linewidth=2.0)
+    ax.text(0.02, 0.98, box_text, transform=ax.transAxes, fontsize=12,
             verticalalignment="top", fontfamily="monospace",
             bbox=props, zorder=10, color=_TEXT)
 
-    # -- Legend ---------------------------------------------------------------
-    leg = ax.legend(loc="lower right", fontsize=10, framealpha=0.85,
-                    facecolor="#0d0d1a", edgecolor="#444466",
+    # -- Leyenda --------------------------------------------------------------
+    leg = ax.legend(loc="lower right", fontsize=12, framealpha=0.95,
+                    facecolor="#FAFAFA", edgecolor="#999999",
                     labelcolor=_TEXT)
-    leg.get_frame().set_linewidth(1.2)
+    leg.get_frame().set_linewidth(1.5)
 
-    # -- Axes -----------------------------------------------------------------
+    # -- Ejes -----------------------------------------------------------------
     ax.set_aspect("equal")
-    ax.set_title(f"{track_name} — GA-Optimized Racing Line",
-                 fontsize=16, fontweight="bold", color="white", pad=14)
-    ax.set_xlabel("x  (m)", fontsize=12)
-    ax.set_ylabel("y  (m)", fontsize=12)
-    ax.grid(True, alpha=0.12, color="#ffffff")
-    ax.tick_params(labelsize=9)
+    ax.set_title(f"{track_name} — Línea de Carrera Optimizada (AG)",
+                 fontsize=18, fontweight="bold", color=_TEXT, pad=16)
+    ax.set_xlabel("x  (m)", fontsize=14)
+    ax.set_ylabel("y  (m)", fontsize=14)
+    ax.grid(True, alpha=0.25, color=_GRID, linewidth=0.8)
+    ax.tick_params(labelsize=10)
 
     fig.tight_layout()
     if save_path:
-        fig.savefig(save_path, dpi=180, bbox_inches="tight",
+        fig.savefig(save_path, dpi=200, bbox_inches="tight",
                     facecolor=fig.get_facecolor())
         print(f"    Saved → {save_path}")
     plt.close(fig)
 
-# -----------------------------------------------------------------------------
+
+# =============================================================================
 # PERFIL DE VELOCIDAD COMPARATIVO
-# -----------------------------------------------------------------------------
+# =============================================================================
 
 def plot_velocity_comparison(geo, ctrl, u_opt, track_name, save_path=None):
-    """Velocity profile: centerline vs optimized."""
-    # Centerline
+    """
+    Perfil de velocidad: línea central vs optimizada.
+    Colores claramente diferenciados con relleno semitransparente.
+    """
+    # Línea central
     cx_c, cy_c = _close_loop(geo["cx"], geo["cy"])
     d_c, v_c = velocity_profile(cx_c, cy_c)
 
-    # Optimized
+    # Optimizada
     tx, ty = reconstruct_trajectory(ctrl, u_opt)
     tx_c, ty_c = _close_loop(tx, ty)
     d_o, v_o = velocity_profile(tx_c, ty_c)
 
-    fig, ax = plt.subplots(figsize=(14, 4.5), dpi=150)
-    ax.fill_between(d_o / 1000, 0, v_o, color=_RACING, alpha=0.18, zorder=2)
-    ax.plot(d_c / 1000, v_c, color=_CENTER, lw=1.0, alpha=0.6, zorder=3,
-            label="Centerline")
-    ax.plot(d_o / 1000, v_o, color=_RACING, lw=1.6, alpha=0.9, zorder=4,
-            label="Optimized raceline")
+    fig, ax = plt.subplots(figsize=(14, 5), dpi=150)
 
-    ax.set_xlabel("Distance  (km)", fontsize=12)
-    ax.set_ylabel("Speed  (km/h)", fontsize=12)
-    ax.set_title(f"{track_name} — Velocity Profile", fontsize=14,
-                 fontweight="bold", color="white", pad=10)
-    ax.set_xlim(0, d_o[-1] / 1000)
+    # Interpolar ambos perfiles a un eje de distancia normalizado común
+    # para poder comparar y hacer fill_between sin errores de tamaño
+    max_dist = max(d_c[-1], d_o[-1])
+    n_common = 2000
+    d_common = np.linspace(0, max_dist, n_common)
+    v_c_interp = np.interp(d_common, d_c, v_c)
+    v_o_interp = np.interp(d_common, d_o, v_o)
+    d_km = d_common / 1000
+
+    # Relleno de diferencia: resalta dónde cada una es más rápida
+    ax.fill_between(d_km, v_c_interp, v_o_interp,
+                    where=v_o_interp > v_c_interp,
+                    color=_VEL_FILL_O, alpha=0.18, zorder=1,
+                    interpolate=True)
+    ax.fill_between(d_km, v_c_interp, v_o_interp,
+                    where=v_c_interp > v_o_interp,
+                    color=_VEL_FILL_C, alpha=0.15, zorder=1,
+                    interpolate=True)
+
+    # Línea optimizada primero (debajo), luego central encima para que no se pierda
+    ax.plot(d_o / 1000, v_o, color=_VEL_OPT, lw=2.8, alpha=0.90,
+            ls="-", zorder=3, label="Raceline optimizada")
+    ax.plot(d_c / 1000, v_c, color=_VEL_CENTER, lw=2.5, alpha=0.95,
+            ls="-", zorder=4,
+            path_effects=[pe.Stroke(linewidth=4.5, foreground="white", alpha=0.6),
+                          pe.Normal()],
+            label="Línea central")
+
+    # Estadísticas de velocidad en caja informativa
+    v_mean_c = np.mean(v_c)
+    v_mean_o = np.mean(v_o)
+    v_max_c  = np.max(v_c)
+    v_max_o  = np.max(v_o)
+    stats_text = (
+        f"Vel. media central:    {v_mean_c:.1f} km/h\n"
+        f"Vel. media optimizada: {v_mean_o:.1f} km/h\n"
+        f"Vel. máx central:      {v_max_c:.1f} km/h\n"
+        f"Vel. máx optimizada:   {v_max_o:.1f} km/h"
+    )
+    props = dict(boxstyle="round,pad=0.5", facecolor="#FAFAFA",
+                 edgecolor="#999999", alpha=0.95, linewidth=1.5)
+    ax.text(0.02, 0.97, stats_text, transform=ax.transAxes, fontsize=10.5,
+            verticalalignment="top", fontfamily="monospace",
+            bbox=props, zorder=10, color=_TEXT)
+
+    ax.set_xlabel("Distancia  (km)", fontsize=14)
+    ax.set_ylabel("Velocidad  (km/h)", fontsize=14)
+    ax.set_title(f"{track_name} — Perfil de Velocidad", fontsize=16,
+                 fontweight="bold", color=_TEXT, pad=12)
+    ax.set_xlim(0, max(d_c[-1], d_o[-1]) / 1000)
     ax.set_ylim(0, None)
-    ax.grid(True, alpha=0.15, color="#ffffff")
-    leg = ax.legend(loc="upper right", fontsize=10, framealpha=0.85,
-                    facecolor="#0d0d1a", edgecolor="#444466", labelcolor=_TEXT)
-    leg.get_frame().set_linewidth(1.0)
+    ax.grid(True, alpha=0.25, color=_GRID, linewidth=0.8)
+
+    leg = ax.legend(loc="upper right", fontsize=12, framealpha=0.95,
+                    facecolor="#FAFAFA", edgecolor="#999999", labelcolor=_TEXT)
+    leg.get_frame().set_linewidth(1.5)
 
     fig.tight_layout()
     if save_path:
-        fig.savefig(save_path, dpi=180, bbox_inches="tight",
+        fig.savefig(save_path, dpi=200, bbox_inches="tight",
                     facecolor=fig.get_facecolor())
         print(f"    Saved → {save_path}")
     plt.close(fig)
 
-# -----------------------------------------------------------------------------
-# VISTA GENERAL — 5 PISTAS EN GRID
-# -----------------------------------------------------------------------------
 
-def plot_all_tracks(all_geo, title="F1 Circuits", save_path=None):
-    """Overview of all loaded circuits."""
+# =============================================================================
+# VISTA GENERAL — PISTAS EN GRID
+# =============================================================================
+
+def plot_all_tracks(all_geo, title="Circuitos F1 Seleccionados", save_path=None):
+    """Vista general de todos los circuitos cargados, con alto contraste."""
     n = len(all_geo)
     cols = min(3, n)
     rows = int(np.ceil(n / cols))
-    fig, axes = plt.subplots(rows, cols, figsize=(6 * cols, 5.5 * rows), dpi=140)
+    fig, axes = plt.subplots(rows, cols, figsize=(7 * cols, 6 * rows), dpi=140)
     if n == 1:
         axes = np.array([axes])
     axes = np.atleast_1d(axes).flatten()
@@ -191,36 +273,40 @@ def plot_all_tracks(all_geo, title="F1 Circuits", save_path=None):
         ax = axes[i]
         ex, ey = _close_loop(geo["ext_x"], geo["ext_y"])
         ix, iy = _close_loop(geo["int_x"], geo["int_y"])
-        ax.fill(ex, ey, color=_TRACK, alpha=0.5)
+
+        ax.fill(ex, ey, color=_TRACK, alpha=0.6)
         ax.fill(ix, iy, color=_BG)
-        ax.plot(ex, ey, color=_BORDER_E, lw=0.9, alpha=0.7)
-        ax.plot(ix, iy, color=_BORDER_I, lw=0.9, alpha=0.7)
+        ax.plot(ex, ey, color=_BORDER_E, lw=1.5, alpha=0.85)
+        ax.plot(ix, iy, color=_BORDER_I, lw=1.5, alpha=0.85)
+
         ccx, ccy = _close_loop(geo["cx"], geo["cy"])
-        ax.plot(ccx, ccy, color=_CENTER, lw=0.8, ls="--", alpha=0.5)
+        ax.plot(ccx, ccy, color=_CENTER, lw=1.5, ls="--", alpha=0.7)
+
         km = track_length(geo)
-        ax.set_title(f"{name}  ({km:.2f} km)", fontsize=13,
-                     fontweight="bold", color="white")
+        ax.set_title(f"{name}  ({km:.2f} km)", fontsize=15,
+                     fontweight="bold", color=_TEXT)
         ax.set_aspect("equal")
-        ax.grid(True, alpha=0.08, color="#ffffff")
-        ax.tick_params(labelsize=7)
+        ax.grid(True, alpha=0.15, color=_GRID)
+        ax.tick_params(labelsize=9)
 
     for j in range(i + 1, len(axes)):
         axes[j].set_visible(False)
 
-    fig.suptitle(title, fontsize=17, fontweight="bold", color="white", y=1.01)
+    fig.suptitle(title, fontsize=20, fontweight="bold", color=_TEXT, y=1.01)
     fig.tight_layout()
     if save_path:
-        fig.savefig(save_path, dpi=180, bbox_inches="tight",
+        fig.savefig(save_path, dpi=200, bbox_inches="tight",
                     facecolor=fig.get_facecolor())
         print(f"    Saved → {save_path}")
     plt.close(fig)
 
-# -----------------------------------------------------------------------------
+
+# =============================================================================
 # TABLA COMPARATIVA DE RESULTADOS
-# -----------------------------------------------------------------------------
+# =============================================================================
 
 def plot_results_table(all_results, save_path=None):
-    """Summary table as a figure."""
+    """Tabla resumen como figura, con colores legibles para proyección."""
     rows_data = []
     for name, r in all_results.items():
         mejora = (r["t_center"] - r["best"]) / r["t_center"] * 100
@@ -233,31 +319,34 @@ def plot_results_table(all_results, save_path=None):
             f'{mejora:.2f}%',
         ])
 
-    cols = ["Circuito", "Centro (s)", "Best (s)", "Mean (s)", "Std (s)", "Improv."]
+    cols = ["Circuito", "Centro (s)", "Mejor (s)", "Media (s)", "Std (s)", "Mejora"]
 
-    fig, ax = plt.subplots(figsize=(10, 1.2 + 0.5 * len(rows_data)), dpi=150)
+    fig, ax = plt.subplots(figsize=(11, 1.5 + 0.6 * len(rows_data)), dpi=150)
     ax.axis("off")
 
     table = ax.table(cellText=rows_data, colLabels=cols, loc="center",
                      cellLoc="center")
     table.auto_set_font_size(False)
-    table.set_fontsize(11)
-    table.scale(1, 1.6)
+    table.set_fontsize(13)
+    table.scale(1, 1.8)
 
     for (r, c), cell in table.get_celld().items():
-        cell.set_edgecolor("#444466")
+        cell.set_edgecolor("#999999")
+        cell.set_linewidth(1.2)
         if r == 0:
-            cell.set_facecolor("#1e3a5f")
-            cell.set_text_props(color="white", fontweight="bold")
+            # Encabezado
+            cell.set_facecolor(_TABLE_HEADER)
+            cell.set_text_props(color="white", fontweight="bold", fontsize=13)
         else:
-            cell.set_facecolor("#0d0d1a" if r % 2 == 0 else "#16162b")
-            cell.set_text_props(color=_TEXT)
+            # Filas de datos
+            cell.set_facecolor(_TABLE_ROW_A if r % 2 == 0 else _TABLE_ROW_B)
+            cell.set_text_props(color=_TEXT, fontsize=12)
 
-    ax.set_title("Optimization Results", fontsize=14,
-                 fontweight="bold", color="white", pad=16)
+    ax.set_title("Resultados de Optimización", fontsize=17,
+                 fontweight="bold", color=_TEXT, pad=18)
     fig.tight_layout()
     if save_path:
-        fig.savefig(save_path, dpi=180, bbox_inches="tight",
+        fig.savefig(save_path, dpi=200, bbox_inches="tight",
                     facecolor=fig.get_facecolor())
         print(f"    Saved → {save_path}")
     plt.close(fig)

@@ -19,17 +19,21 @@ from typing import Callable
 
 @dataclass
 class GAConfig:
-    """Parámetros del Algoritmo Genético."""
+    """Parámetros del Algoritmo Genético.
+    
+    Punto único de configuración: modificar estos valores afecta
+    directamente a main.py sin necesidad de tocar otro archivo.
+    """
     pop_size:       int   = 50       # Tamaño de población
-    n_generations:  int   = 2000    # Número de generaciones
+    n_generations:  int   = 200     # Número de generaciones
     pc:             float = 0.90     # Probabilidad de cruzamiento SBX
     pm:             float = None     # Probabilidad de mutación (None → 1/N)
     eta_c:          float = 5.0      # Índice de distribución SBX (Nc)
     eta_m:          float = 20.0     # Índice de distribución mutación (Nm)
-    tournament_k:   int  = 2         # Tamaño del torneo
+    tournament_k:   int   = 2        # Tamaño del torneo
     seed:           int   = None     # Semilla aleatoria (None = aleatoria)
     verbose:        bool  = True     # Imprimir progreso
-    max_evals:      int   = None     # Número máximo de evaluaciones
+    max_evals:      int   = 10_000   # Número máximo de evaluaciones
 
 # -----------------------------------------------------------------------------
 # ESTRUCTURA DE RESULTADOS

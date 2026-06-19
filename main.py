@@ -1,18 +1,16 @@
 """
 main.py — Módulo 4: Pipeline completo de optimización de racelines en pistas de F1
-Conecta todos los módulos y ejecuta el pipeline completo:
 ====================================================================================
 USO:
     python main.py
-
 
 1. Carga y visualiza las 5 pistas
 2. Para cada pista:
        a. Prepara geometría y puntos de control
        b. Ejecuta el AG (n_runs corridas independientes)
-       c. Muestra trayectoria optimizada(CSV y grafico) y perfil de velocidad
+       c. Muestra trayectoria optimizada (CSV y gráfico) y perfil de velocidad
 3. Muestra tabla comparativa de resultados
-    
+
 Genera en la carpeta outputs/:
     - {Pista}_raceline.csv   → coordenadas x,y de la mejor trayectoria
     - {Pista}_raceline.png   → gráfica de la pista con líneas y tiempos
@@ -23,7 +21,6 @@ Genera en la carpeta outputs/:
 
 import os
 import time
-import urllib.request
 import numpy as np
 
 from track_model import (load_track, compute_track_geometry,
@@ -48,8 +45,18 @@ TRACKS = {
 }
 
 N_CTRL   = 60      # Puntos de control (más = mejor pero más lento)
-N_RUNS   = 10       # Corridas independientes del AG
+N_RUNS   = 10      # Corridas independientes del AG
 OUTPUT   = "outputs"
+
+# -----------------------------------------------------------------------------
+# CONFIGURACIÓN DEL ALGORITMO GENÉTICO
+# -----------------------------------------------------------------------------
+# Todos los parámetros se controlan desde GAConfig en genetic_algorithm.py.
+# Para ajustar el AG, modifica los defaults allá — no aquí.
+# -----------------------------------------------------------------------------
+
+ga_config = GAConfig()
+
 
 # -----------------------------------------------------------------------------
 # GUARDAR RACELINE CSV
@@ -75,18 +82,6 @@ def main():
     Genera archivos CSV y gráficos para cada pista, más una tabla comparativa.
     """
     os.makedirs(OUTPUT, exist_ok=True)
-
-    # Configuración del Algoritmo Genético: se usan los valores por defecto
-    ga_config = GAConfig(
-        pop_size     = 50,      # tamaño de la población
-        max_evals    = 10000,    # número máximo de evaluaciones (ajustable según tiempo disponible)
-        pc           = 0.90,    # probabilidad de cruce
-        eta_c        = 5.0,     # distribución de cruce (valores más altos = soluciones más similares a los padres)
-        eta_m        = 20.0,    # distribución de mutación (valores más altos = cambios más pequeños)
-        tournament_k = 2,       # tamaño del torneo (2 = selección binaria)
-        seed         = None,
-        verbose      = False,
-    )
 
     # -- Cargar pistas --------------------------------------------------------
     print("\n" + "=" * 60)
@@ -119,6 +114,12 @@ def main():
     print("\n" + "=" * 60)
     print("  PASO 2: Optimización con Algoritmo Genético")
     print("=" * 60)
+
+    # Mostrar configuración activa del AG
+    print(f"\n  Configuración AG:")
+    print(f"    pop_size={ga_config.pop_size}, max_evals={ga_config.max_evals}, "
+          f"pc={ga_config.pc}, eta_c={ga_config.eta_c}, eta_m={ga_config.eta_m}, "
+          f"tournament_k={ga_config.tournament_k}")
 
     all_results = {}
 
