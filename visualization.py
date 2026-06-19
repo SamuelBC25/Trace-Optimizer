@@ -5,10 +5,11 @@ Versión optimizada para proyección: fondo blanco, colores de alto contraste,
 líneas gruesas y tipografía grande para máxima legibilidad en presentaciones.
 
 Funciones principales:
-- plot_track_result: Gráfica detallada de la pista con raceline optimizada.
+- plot_track_individual:    Pista individual SIN raceline (solo trazado/bordes).
+- plot_track_result:        Gráfica detallada de la pista con raceline optimizada.
 - plot_velocity_comparison: Perfil de velocidad comparativo entre centro y raceline.
-- plot_all_tracks: Vista general de todas las pistas cargadas.
-- plot_results_table: Tabla resumen de resultados como figura.
+- plot_all_tracks:          Vista general (grid) de todas las pistas cargadas.
+- plot_results_table:       Tabla resumen de resultados como figura.
 """
 
 import numpy as np
@@ -77,10 +78,113 @@ plt.rcParams.update({
     "grid.color":         _GRID,
 })
 
+# -----------------------------------------------------------------------------
+# Escala / tamaño de figura
+# -----------------------------------------------------------------------------
+# Tamaño físico (pulgadas) y resolución usados para las gráficas de pista
+# individuales (plot_track_individual y plot_track_result). Subir estos
+# valores hace que la pista se dibuje más grande y que la raceline se
+# distinga con más claridad de los bordes de la pista.
+_TRACK_FIGSIZE   = (18, 14)   # antes: (14, 10)
+_TRACK_DPI_SHOW  = 160        # dpi en pantalla
+_TRACK_DPI_SAVE  = 260        # dpi al guardar (antes: 200)
+_TRACK_PAD_FRAC  = 0.04       # margen alrededor de la pista, como fracción de su tamaño
+
 
 def _close_loop(x, y):
     """Cierra el circuito conectando el último punto con el primero."""
     return np.append(x, x[0]), np.append(y, y[0])
+
+
+def _set_tight_limits(ax, *xy_pairs, pad_frac=_TRACK_PAD_FRAC):
+    """
+    Ajusta los límites de los ejes ceñidos a la geometría de la pista
+    (en vez de dejar que matplotlib decida), con un margen pequeño.
+    Esto "acerca" visualmente la pista, agrandando su escala aparente
+    y dejando más espacio relativo para distinguir las líneas entre sí.
+    """
+    xs = np.concatenate([p[0] for p in xy_pairs])
+    ys = np.concatenate([p[1] for p in xy_pairs])
+    x_min, x_max = xs.min(), xs.max()
+    y_min, y_max = ys.min(), ys.max()
+    dx = (x_max - x_min) or 1.0
+    dy = (y_max - y_min) or 1.0
+    pad_x = dx * pad_frac
+    pad_y = dy * pad_frac
+    ax.set_xlim(x_min - pad_x, x_max + pad_x)
+    ax.set_ylim(y_min - pad_y, y_max + pad_y)
+
+
+# =============================================================================
+# PISTA INDIVIDUAL — SIN RACELINE
+# =============================================================================
+
+def plot_track_individual(geo, track_name, save_path=None):
+    """
+    Gráfica individual de una sola pista, SIN raceline ni línea central
+    optimizada: solo la superficie, los bordes interior/exterior y el
+    marcador de salida/meta. Pensada como vista "limpia" de cada circuito,
+    generada en un archivo propio (en vez de un grid con todas juntas).
+
+    A diferencia del grid de plot_all_tracks, esta función usa una escala
+    grande (figsize/dpi altos) y recorta los ejes ceñidos a la pista para
+    que el trazado se aprecie con el mayor detalle posible.
+    """
+    fig, ax = plt.subplots(figsize=_TRACK_FIGSIZE, dpi=_TRACK_DPI_SHOW)
+
+    # -- Superficie de pista --------------------------------------------------
+    ex, ey = _close_loop(geo["ext_x"], geo["ext_y"])
+    ix, iy = _close_loop(geo["int_x"], geo["int_y"])
+
+    ax.fill(ex, ey, color=_TRACK, alpha=0.7, zorder=1)
+    ax.fill(ix, iy, color=_BG,    zorder=2)
+
+    # -- Bordes (gruesos, oscuros) --------------------------------------------
+    ax.plot(ex, ey, color=_BORDER_E, lw=2.4, alpha=0.9, zorder=3,
+            label="Borde exterior")
+    ax.plot(ix, iy, color=_BORDER_I, lw=2.4, alpha=0.9, zorder=3,
+            label="Borde interior")
+
+    # -- Línea central (azul, punteada) ---------------------------------------
+    ccx, ccy = _close_loop(geo["cx"], geo["cy"])
+    ax.plot(ccx, ccy, color=_CENTER, lw=2.5, ls="--", alpha=0.85, zorder=4,
+            label="Línea central")
+
+    # -- Marcador de salida/meta ----------------------------------------------
+    ax.scatter(geo["cx"][0], geo["cy"][0], s=220, c=_GOLD, marker="D",
+               edgecolors="black", linewidths=1.4, zorder=7,
+               label="Salida / Meta")
+
+    # -- Caja informativa -------------------------------------------------
+    km = track_length(geo)
+    box_text = f"Longitud: {km:.2f} km\nPuntos: {len(geo['cx'])}"
+    props = dict(boxstyle="round,pad=0.6", facecolor="#FAFAFA",
+                 edgecolor=_ACCENT, alpha=0.95, linewidth=2.0)
+    ax.text(0.02, 0.98, box_text, transform=ax.transAxes, fontsize=13,
+            verticalalignment="top", fontfamily="monospace",
+            bbox=props, zorder=10, color=_TEXT)
+
+    leg = ax.legend(loc="lower right", fontsize=13, framealpha=0.95,
+                    facecolor="#FAFAFA", edgecolor="#999999",
+                    labelcolor=_TEXT)
+    leg.get_frame().set_linewidth(1.5)
+
+    # -- Ejes, escala ceñida a la pista ----------------------------------------
+    ax.set_aspect("equal")
+    _set_tight_limits(ax, (ex, ey), (ix, iy))
+    ax.set_title(f"{track_name}  ({km:.2f} km)",
+                 fontsize=20, fontweight="bold", color=_TEXT, pad=18)
+    ax.set_xlabel("x  (m)", fontsize=15)
+    ax.set_ylabel("y  (m)", fontsize=15)
+    ax.grid(True, alpha=0.25, color=_GRID, linewidth=0.8)
+    ax.tick_params(labelsize=11)
+
+    fig.tight_layout()
+    if save_path:
+        fig.savefig(save_path, dpi=_TRACK_DPI_SAVE, bbox_inches="tight",
+                    facecolor=fig.get_facecolor())
+        print(f"    Saved → {save_path}")
+    plt.close(fig)
 
 
 # =============================================================================
@@ -96,8 +200,12 @@ def plot_track_result(geo, ctrl, u_opt, track_name, t_center, t_opt,
       - Línea central (azul, punteada)
       - Raceline optimizada (rojo, sólida gruesa)
       - Caja comparativa de tiempos
+
+    Usa una escala grande (figsize/dpi altos) y recorta los ejes ceñidos
+    a la geometría de la pista, de modo que la raceline se distinga con
+    claridad frente a los bordes y la línea central.
     """
-    fig, ax = plt.subplots(figsize=(14, 10), dpi=150)
+    fig, ax = plt.subplots(figsize=_TRACK_FIGSIZE, dpi=_TRACK_DPI_SHOW)
 
     # -- Superficie de pista --------------------------------------------------
     ex, ey = _close_loop(geo["ext_x"], geo["ext_y"])
@@ -107,26 +215,26 @@ def plot_track_result(geo, ctrl, u_opt, track_name, t_center, t_opt,
     ax.fill(ix, iy, color=_BG,    zorder=2)
 
     # -- Bordes (gruesos, oscuros) --------------------------------------------
-    ax.plot(ex, ey, color=_BORDER_E, lw=2.0, alpha=0.9, zorder=3,
+    ax.plot(ex, ey, color=_BORDER_E, lw=2.2, alpha=0.9, zorder=3,
             label="Bordes de pista")
-    ax.plot(ix, iy, color=_BORDER_I, lw=2.0, alpha=0.9, zorder=3)
+    ax.plot(ix, iy, color=_BORDER_I, lw=2.2, alpha=0.9, zorder=3)
 
     # -- Línea central (azul, punteada) ---------------------------------------
     ccx, ccy = _close_loop(geo["cx"], geo["cy"])
-    ax.plot(ccx, ccy, color=_CENTER, lw=2.5, ls="--", alpha=0.85, zorder=4,
+    ax.plot(ccx, ccy, color=_CENTER, lw=2.7, ls="--", alpha=0.85, zorder=4,
             label=f"Línea central  ({t_center:.3f} s)")
 
     # -- Raceline optimizada (rojo, sólida gruesa) ----------------------------
     tx, ty = reconstruct_trajectory(ctrl, u_opt)
     tx_c, ty_c = _close_loop(tx, ty)
-    ax.plot(tx_c, ty_c, color=_RACING, lw=3.2, alpha=0.95, zorder=5,
-            path_effects=[pe.Stroke(linewidth=5.5, foreground="white", alpha=0.5),
+    ax.plot(tx_c, ty_c, color=_RACING, lw=3.6, alpha=0.95, zorder=5,
+            path_effects=[pe.Stroke(linewidth=6.0, foreground="white", alpha=0.5),
                           pe.Normal()],
             label=f"Optimizada   ({t_opt:.3f} s)")
 
     # -- Marcador de salida/meta ----------------------------------------------
-    ax.scatter(geo["cx"][0], geo["cy"][0], s=180, c=_GOLD, marker="D",
-               edgecolors="black", linewidths=1.2, zorder=7,
+    ax.scatter(geo["cx"][0], geo["cy"][0], s=200, c=_GOLD, marker="D",
+               edgecolors="black", linewidths=1.3, zorder=7,
                label="Salida / Meta")
 
     # -- Caja comparativa de tiempos ------------------------------------------
@@ -143,28 +251,29 @@ def plot_track_result(geo, ctrl, u_opt, track_name, t_center, t_opt,
     )
     props = dict(boxstyle="round,pad=0.6", facecolor="#FAFAFA",
                  edgecolor=_ACCENT, alpha=0.95, linewidth=2.0)
-    ax.text(0.02, 0.98, box_text, transform=ax.transAxes, fontsize=12,
+    ax.text(0.02, 0.98, box_text, transform=ax.transAxes, fontsize=13,
             verticalalignment="top", fontfamily="monospace",
             bbox=props, zorder=10, color=_TEXT)
 
     # -- Leyenda --------------------------------------------------------------
-    leg = ax.legend(loc="lower right", fontsize=12, framealpha=0.95,
+    leg = ax.legend(loc="lower right", fontsize=13, framealpha=0.95,
                     facecolor="#FAFAFA", edgecolor="#999999",
                     labelcolor=_TEXT)
     leg.get_frame().set_linewidth(1.5)
 
-    # -- Ejes -----------------------------------------------------------------
+    # -- Ejes, escala ceñida a la pista ----------------------------------------
     ax.set_aspect("equal")
+    _set_tight_limits(ax, (ex, ey), (ix, iy), (tx_c, ty_c))
     ax.set_title(f"{track_name} — Línea de Carrera Optimizada (AG)",
-                 fontsize=18, fontweight="bold", color=_TEXT, pad=16)
-    ax.set_xlabel("x  (m)", fontsize=14)
-    ax.set_ylabel("y  (m)", fontsize=14)
+                 fontsize=20, fontweight="bold", color=_TEXT, pad=18)
+    ax.set_xlabel("x  (m)", fontsize=15)
+    ax.set_ylabel("y  (m)", fontsize=15)
     ax.grid(True, alpha=0.25, color=_GRID, linewidth=0.8)
-    ax.tick_params(labelsize=10)
+    ax.tick_params(labelsize=11)
 
     fig.tight_layout()
     if save_path:
-        fig.savefig(save_path, dpi=200, bbox_inches="tight",
+        fig.savefig(save_path, dpi=_TRACK_DPI_SAVE, bbox_inches="tight",
                     facecolor=fig.get_facecolor())
         print(f"    Saved → {save_path}")
     plt.close(fig)
@@ -188,7 +297,7 @@ def plot_velocity_comparison(geo, ctrl, u_opt, track_name, save_path=None):
     tx_c, ty_c = _close_loop(tx, ty)
     d_o, v_o = velocity_profile(tx_c, ty_c)
 
-    fig, ax = plt.subplots(figsize=(14, 5), dpi=150)
+    fig, ax = plt.subplots(figsize=(16, 5.5), dpi=150)
 
     # Interpolar ambos perfiles a un eje de distancia normalizado común
     # para poder comparar y hacer fill_between sin errores de tamaño
@@ -264,7 +373,7 @@ def plot_all_tracks(all_geo, title="Circuitos F1 Seleccionados", save_path=None)
     n = len(all_geo)
     cols = min(3, n)
     rows = int(np.ceil(n / cols))
-    fig, axes = plt.subplots(rows, cols, figsize=(7 * cols, 6 * rows), dpi=140)
+    fig, axes = plt.subplots(rows, cols, figsize=(8 * cols, 7 * rows), dpi=150)
     if n == 1:
         axes = np.array([axes])
     axes = np.atleast_1d(axes).flatten()
@@ -276,23 +385,24 @@ def plot_all_tracks(all_geo, title="Circuitos F1 Seleccionados", save_path=None)
 
         ax.fill(ex, ey, color=_TRACK, alpha=0.6)
         ax.fill(ix, iy, color=_BG)
-        ax.plot(ex, ey, color=_BORDER_E, lw=1.5, alpha=0.85)
-        ax.plot(ix, iy, color=_BORDER_I, lw=1.5, alpha=0.85)
+        ax.plot(ex, ey, color=_BORDER_E, lw=1.8, alpha=0.85)
+        ax.plot(ix, iy, color=_BORDER_I, lw=1.8, alpha=0.85)
 
         ccx, ccy = _close_loop(geo["cx"], geo["cy"])
-        ax.plot(ccx, ccy, color=_CENTER, lw=1.5, ls="--", alpha=0.7)
+        ax.plot(ccx, ccy, color=_CENTER, lw=1.6, ls="--", alpha=0.7)
 
         km = track_length(geo)
-        ax.set_title(f"{name}  ({km:.2f} km)", fontsize=15,
-                     fontweight="bold", color=_TEXT)
         ax.set_aspect("equal")
+        _set_tight_limits(ax, (ex, ey), (ix, iy))
+        ax.set_title(f"{name}  ({km:.2f} km)", fontsize=16,
+                     fontweight="bold", color=_TEXT)
         ax.grid(True, alpha=0.15, color=_GRID)
-        ax.tick_params(labelsize=9)
+        ax.tick_params(labelsize=10)
 
     for j in range(i + 1, len(axes)):
         axes[j].set_visible(False)
 
-    fig.suptitle(title, fontsize=20, fontweight="bold", color=_TEXT, y=1.01)
+    fig.suptitle(title, fontsize=22, fontweight="bold", color=_TEXT, y=1.01)
     fig.tight_layout()
     if save_path:
         fig.savefig(save_path, dpi=200, bbox_inches="tight",
