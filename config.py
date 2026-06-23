@@ -29,8 +29,8 @@ OVERSAMPLE     = 5      # Densidad de muestreo de la trayectoria reconstruida
 # -----------------------------------------------------------------------------
 # ALGORITMO GENÉTICO  (defaults de GAConfig)
 # -----------------------------------------------------------------------------
-POP_SIZE      = 100       # Tamaño de población
-N_GENERATIONS = 1000      # Número de generaciones (informativo: manda MAX_EVALS)
+POP_SIZE      = 100      # Tamaño de población
+N_GENERATIONS = 600      # Número de generaciones 
 PC            = 0.90     # Probabilidad de cruzamiento SBX
 PM            = None     # Probabilidad de mutación (None → 1/N)
 ETA_C         = 5.0      # Índice de distribución SBX (Nc)
@@ -38,7 +38,7 @@ ETA_M         = 15.0     # Índice de distribución mutación (Nm)
 TOURNAMENT_K  = 2        # Tamaño del torneo
 SEED          = None     # Semilla aleatoria (None = aleatoria)
 VERBOSE       = True     # Imprimir progreso
-MAX_EVALS     = None   # Número máximo de evaluaciones
+MAX_EVALS     = None     # Número máximo de evaluaciones
 # --- PARÁMETROS PARA CONVERGENCIA (EARLY STOPPING) ---
 PATIENCE      = 50        # Generaciones sin mejora antes de detenerse (None para desactivar)
 TOLERANCE     = 1e-4      # Mejora mínima en segundos para considerar que no ha estancado (0.0001 = 0.1 ms)

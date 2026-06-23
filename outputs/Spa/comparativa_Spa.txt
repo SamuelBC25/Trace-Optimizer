@@ -5,16 +5,17 @@ Penalización en TODA la interpolación (FULL) vs SOLO en los control points (CT
 Métrica                                       FULL             CTRL_ONLY
 ------------------------------------------------------------------------------
 Tiempo línea central (s)                   121.617               121.617
-Tiempo real mejor sol. (s)                 121.110               121.108
-Fitness c/ penalización (s)                121.110               121.108
-Media fitness (s)                          121.150               121.151
-σ fitness (s)                                0.029                 0.023
-Violación total real (m)                      0.00                  0.00
-Violación máxima real (m)                    0.000                 0.000
-Tiempo de cómputo (s)                        238.5                 204.2
+Tiempo real mejor sol. (s)                 121.079               121.038
+Fitness c/ penalización (s)                121.079               121.038
+Media fitness (s)                          121.090               121.041
+σ fitness (s)                                0.008                 0.004
+Violación total real (m)                      0.00                 47.18
+Violación máxima real (m)                    0.000                 0.421
+Tiempo de CPU (s)                            971.0                 921.4
+Tiempo de reloj (s)                          974.1                 924.2
 
-Mejora real vs línea central — FULL:        0.42 %
-Mejora real vs línea central — CTRL_ONLY:   0.42 %
+Mejora real vs línea central — FULL:        0.44 %
+Mejora real vs línea central — CTRL_ONLY:   0.48 %
 
 Nota: 'Tiempo real' y 'Violación' se miden SIEMPRE sobre la trayectoria
 interpolada completa (N*oversample puntos), independientemente de qué

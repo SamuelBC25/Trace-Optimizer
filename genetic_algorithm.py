@@ -242,7 +242,7 @@ def run_ga(objective, lb, ub, config=None, callback=None):
         print(f"  Done — Best: {best_fitness:.4f}s | Gens: {gen} | Evals: {n_evals}")
 
     return GAResult(best_u=best_u, best_fitness=best_fitness,
-                    history=history, n_evals=n_evals, n_gen=gen)
+                    history=history, n_evals=n_evals, n_gen=gen, converged_at_gen=converged_at_gen)
 
 
 # -----------------------------------------------------------------------------
@@ -280,7 +280,7 @@ def multi_run(objective, lb, ub, config, n_runs=10, verbose=True):
         results.append(result)
         fitnesses.append(result.best_fitness)
         if verbose:
-            print(f"{result.best_fitness:.4f}s")
+            print(f"{result.best_fitness:.4f}s | Terminó en gen {result.n_gen:03d} | Evals: {result.n_evals}")
 
     fitnesses = np.array(fitnesses)
     best_idx  = np.argmin(fitnesses)
