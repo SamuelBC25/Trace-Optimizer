@@ -33,6 +33,7 @@ generados por compare.py sin duplicar trabajo.
 
 import os
 
+from config import TRACKS, N_CTRL, N_RUNS, OUTPUT
 from track_model import load_track, compute_track_geometry, track_length
 from visualization import (plot_all_tracks, plot_track_individual,
                            plot_results_table)
@@ -40,29 +41,10 @@ import compare
 
 
 # -----------------------------------------------------------------------------
-# CONFIGURACIÓN — punto único de verdad, compartido con compare.py
+# CONFIGURACIÓN — toda en config.py (TRACKS, N_CTRL, N_RUNS, OUTPUT y AG).
+# compare.py también importa desde config.py, así que no hay que sincronizar.
 # -----------------------------------------------------------------------------
-
-TRACKS = {
-    "Shanghai":    "tracks/Shanghai.csv",
-    "Suzuka":      "tracks/Suzuka.csv",
-    "Silverstone": "tracks/Silverstone.csv",
-    "Zandvoort":   "tracks/Zandvoort.csv",
-    "Spa":         "tracks/Spa.csv",
-}
-
-N_CTRL = 60
-N_RUNS = 10
-OUTPUT = "outputs"
 TRACKS_DIR = os.path.join(OUTPUT, "tracks")
-
-# Sincronizar config con compare.py para que usen exactamente los mismos parámetros
-compare.TRACKS  = TRACKS
-compare.N_CTRL  = N_CTRL
-compare.N_RUNS  = N_RUNS
-compare.OUTPUT  = OUTPUT
-# ga_config: compare.ga_config usa GAConfig() por defecto, igual que antes.
-# Si quieres cambiar parámetros del AG, modifica GAConfig en genetic_algorithm.py.
 
 
 # -----------------------------------------------------------------------------

@@ -56,22 +56,11 @@ from visualization import (plot_track_result, plot_velocity_comparison,
                            _TEXT, _TABLE_HEADER, _TABLE_ROW_A, _TABLE_ROW_B)
 
 # -----------------------------------------------------------------------------
-# CONFIGURACIÓN — idéntica a main.py
+# CONFIGURACIÓN — toda desde config.py (punto único de verdad)
 # -----------------------------------------------------------------------------
+from config import TRACKS, N_CTRL, N_RUNS, OUTPUT
 
-TRACKS = {
-    "Shanghai":    "tracks/Shanghai.csv",
-    "Suzuka":      "tracks/Suzuka.csv",
-    "Silverstone": "tracks/Silverstone.csv",
-    "Zandvoort":   "tracks/Zandvoort.csv",
-    "Spa":         "tracks/Spa.csv",
-}
-
-N_CTRL = 60
-N_RUNS = 10
-OUTPUT = "outputs"
-
-ga_config = GAConfig()   # misma config por defecto que main.py
+ga_config = GAConfig()   # defaults de GAConfig también vienen de config.py
 
 
 def track_output_dir(name):
@@ -116,9 +105,11 @@ def run_variant(name, geo, ctrl, lb, ub, obj_fn, variant_dir, label, penalty):
     t_center = obj(u_center)
 
     print(f"    [{label}] Tiempo línea central: {t_center:.3f} s")
-    t0 = time.time()
+    t0   = time.time()           # reloj de pared (incluye carga del sistema)
+    cpu0 = time.process_time()   # tiempo de CPU del proceso (estable vs. carga externa)
     stats = multi_run(obj, lb, ub, ga_config, n_runs=N_RUNS, verbose=True)
     elapsed = time.time() - t0
+    cpu     = time.process_time() - cpu0
 
     # Violación medida SIEMPRE en toda la trayectoria interpolada (criterio
     # objetivo común para comparar full vs ctrl_only de forma justa).
@@ -131,13 +122,15 @@ def run_variant(name, geo, ctrl, lb, ub, obj_fn, variant_dir, label, penalty):
     stats["t_center"] = t_center
     stats["t_real"]   = t_real
     stats["elapsed"]  = elapsed
+    stats["cpu"]      = cpu
     stats["viol_total"] = viol_t
     stats["viol_max"]   = viol_m
 
     print(f"      Mejor fitness (con penal.) : {stats['best']:.3f} s")
     print(f"      Tiempo de vuelta REAL      : {t_real:.3f} s")
     print(f"      Violación real             : máx {viol_m:.3f} m | total {viol_t:.1f} m")
-    print(f"      Tiempo cómputo             : {elapsed:.1f} s")
+    print(f"      Tiempo CPU                 : {cpu:.1f} s")
+    print(f"      Tiempo reloj (pared)       : {elapsed:.1f} s")
 
     csv_path = os.path.join(variant_dir, f"{name}_raceline.csv")
     save_raceline_csv(ctrl, stats["best_u"], csv_path)
@@ -226,7 +219,9 @@ def plot_comparison_table(name, stats_full, stats_ctrl, save_path):
          f'{stats_full["viol_total"]:.2f}', f'{stats_ctrl["viol_total"]:.2f}'],
         ["Violación máxima real (m)",
          f'{stats_full["viol_max"]:.3f}', f'{stats_ctrl["viol_max"]:.3f}'],
-        ["Tiempo de cómputo (s)",
+        ["Tiempo de CPU (s)",
+         f'{stats_full["cpu"]:.1f}', f'{stats_ctrl["cpu"]:.1f}'],
+        ["Tiempo de reloj (s)",
          f'{stats_full["elapsed"]:.1f}', f'{stats_ctrl["elapsed"]:.1f}'],
     ]
     cols = ["Métrica", "FULL\n(penaliza toda la interpolación)",
@@ -279,7 +274,8 @@ def write_comparison_text(name, stats_full, stats_ctrl, save_path):
     row("σ fitness (s)", stats_full["std"], stats_ctrl["std"])
     row("Violación total real (m)", stats_full["viol_total"], stats_ctrl["viol_total"], "{:.2f}")
     row("Violación máxima real (m)", stats_full["viol_max"], stats_ctrl["viol_max"], "{:.3f}")
-    row("Tiempo de cómputo (s)", stats_full["elapsed"], stats_ctrl["elapsed"], "{:.1f}")
+    row("Tiempo de CPU (s)", stats_full["cpu"], stats_ctrl["cpu"], "{:.1f}")
+    row("Tiempo de reloj (s)", stats_full["elapsed"], stats_ctrl["elapsed"], "{:.1f}")
 
     lines.append("")
     mejora_full = (stats_full["t_center"] - stats_full["t_real"]) / stats_full["t_center"] * 100

@@ -16,24 +16,26 @@ import numpy as np
 from dataclasses import dataclass, field
 from typing import Callable
 
+import config as C
+
 
 @dataclass
 class GAConfig:
     """Parámetros del Algoritmo Genético.
-    
-    Punto único de configuración: modificar estos valores afecta
-    directamente a main.py sin necesidad de tocar otro archivo.
+
+    Los valores por defecto se leen desde config.py (punto único de
+    configuración). NO los cambies aquí: edítalos en config.py.
     """
-    pop_size:       int   = 50       # Tamaño de población
-    n_generations:  int   = 200     # Número de generaciones
-    pc:             float = 0.90     # Probabilidad de cruzamiento SBX
-    pm:             float = None     # Probabilidad de mutación (None → 1/N)
-    eta_c:          float = 5.0      # Índice de distribución SBX (Nc)
-    eta_m:          float = 20.0     # Índice de distribución mutación (Nm)
-    tournament_k:   int   = 2        # Tamaño del torneo
-    seed:           int   = None     # Semilla aleatoria (None = aleatoria)
-    verbose:        bool  = True     # Imprimir progreso
-    max_evals:      int   = 10_000   # Número máximo de evaluaciones
+    pop_size:       int   = C.POP_SIZE
+    n_generations:  int   = C.N_GENERATIONS
+    pc:             float = C.PC
+    pm:             float = C.PM
+    eta_c:          float = C.ETA_C
+    eta_m:          float = C.ETA_M
+    tournament_k:   int   = C.TOURNAMENT_K
+    seed:           int   = C.SEED
+    verbose:        bool  = C.VERBOSE
+    max_evals:      int   = C.MAX_EVALS
 
 # -----------------------------------------------------------------------------
 # ESTRUCTURA DE RESULTADOS
@@ -140,7 +142,7 @@ def run_ga(objective, lb, ub, config=None, callback=None):
     pop[0] = np.clip(np.zeros(n), lb, ub)
     span = (ub - lb)
     for i in range(1, n_seed):
-        pop[i] = np.clip(rng.normal(0.0, 0.15 * span), lb, ub)
+        pop[i] = np.clip(rng.normal(0.0, 0.35 * span), lb, ub)
     fitness = np.array([objective(ind) for ind in pop])
     n_evals = config.pop_size
 
@@ -154,7 +156,7 @@ def run_ga(objective, lb, ub, config=None, callback=None):
         print(f"  Gen 000 | Best: {best_fitness:.4f}s | Evals: {n_evals}")
 
     # Bucle principal del AG: selección, cruce, mutación y reemplazo elitista.
-    while n_evals < config.max_evals:
+    while n_evals < max_evals:
         new_pop     = []
         new_fitness = []
 
@@ -182,9 +184,9 @@ def run_ga(objective, lb, ub, config=None, callback=None):
                 new_pop.append(child)
                 new_fitness.append(f)
                 n_evals += 1
-                if n_evals >= config.max_evals:
+                if n_evals >= max_evals:
                     break
-            if n_evals >= config.max_evals:
+            if n_evals >= max_evals:
                 break
 
         pop     = np.array(new_pop)

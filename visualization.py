@@ -19,7 +19,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patheffects as pe
 from matplotlib.patches import FancyArrowPatch
 from track_model import (reconstruct_trajectory, lap_time, velocity_profile,
-                         track_length)
+                         velocity_profile_smooth, track_length)
+from config import VMAX, VEL_SMOOTH_WINDOW
 
 
 # =============================================================================
@@ -297,32 +298,32 @@ def plot_velocity_comparison(geo, ctrl, u_opt, track_name, save_path=None):
     tx_c, ty_c = _close_loop(tx, ty)
     d_o, v_o = velocity_profile(tx_c, ty_c)
 
-    fig, ax = plt.subplots(figsize=(16, 5.5), dpi=150)
+    # Figura más alta = más aire vertical entre las dos curvas
+    fig, ax = plt.subplots(figsize=(16, 6.5), dpi=150)
 
-    # Interpolar ambos perfiles a un eje de distancia normalizado común
-    # para poder comparar y hacer fill_between sin errores de tamaño
-    max_dist = max(d_c[-1], d_o[-1])
-    n_common = 2000
-    d_common = np.linspace(0, max_dist, n_common)
-    v_c_interp = np.interp(d_common, d_c, v_c)
-    v_o_interp = np.interp(d_common, d_o, v_o)
-    d_km = d_common / 1000
+    # MISMOS datos / mismo modelo físico. Sólo cambia cómo se dibujan:
+    #   - traza cruda (optimizada) en fino y translúcido → ya no es un muro rojo
+    #   - encima, una línea-guía con la curvatura suavizada (limpia los picos
+    #     numéricos del radio de 3 puntos sin tocar el AG ni el tiempo de vuelta)
+    _, v_o_smooth = velocity_profile_smooth(tx_c, ty_c, VEL_SMOOTH_WINDOW)
+    _, v_c_smooth = velocity_profile_smooth(cx_c, cy_c, VEL_SMOOTH_WINDOW)
 
-    # Relleno de diferencia: resalta dónde cada una es más rápida
-    ax.fill_between(d_km, v_c_interp, v_o_interp,
-                    where=v_o_interp > v_c_interp,
-                    color=_VEL_FILL_O, alpha=0.18, zorder=1,
-                    interpolate=True)
-    ax.fill_between(d_km, v_c_interp, v_o_interp,
-                    where=v_c_interp > v_o_interp,
-                    color=_VEL_FILL_C, alpha=0.15, zorder=1,
-                    interpolate=True)
+    do_km, dc_km = d_o / 1000, d_c / 1000
 
-    # Línea optimizada primero (debajo), luego central encima para que no se pierda
-    ax.plot(d_o / 1000, v_o, color=_VEL_OPT, lw=2.8, alpha=0.90,
-            ls="-", zorder=3, label="Raceline optimizada")
-    ax.plot(d_c / 1000, v_c, color=_VEL_CENTER, lw=2.5, alpha=0.95,
+    # 1) Traza cruda optimizada: delgada y muy transparente (queda de fondo)
+    ax.plot(do_km, v_o, color=_VEL_OPT, lw=0.7, alpha=0.28,
+            ls="-", zorder=2, label="Optimizada (cruda)")
+
+    # 2) Guía suavizada optimizada: la línea que de verdad se lee
+    ax.plot(do_km, v_o_smooth, color=_VEL_OPT, lw=2.8, alpha=0.95,
             ls="-", zorder=4,
+            path_effects=[pe.Stroke(linewidth=4.5, foreground="white", alpha=0.55),
+                          pe.Normal()],
+            label="Optimizada (suavizada)")
+
+    # 3) Línea central suavizada igual, para comparar manzanas con manzanas
+    ax.plot(dc_km, v_c_smooth, color=_VEL_CENTER, lw=2.6, alpha=0.95,
+            ls="-", zorder=5,
             path_effects=[pe.Stroke(linewidth=4.5, foreground="white", alpha=0.6),
                           pe.Normal()],
             label="Línea central")
@@ -349,7 +350,7 @@ def plot_velocity_comparison(geo, ctrl, u_opt, track_name, save_path=None):
     ax.set_title(f"{track_name} — Perfil de Velocidad", fontsize=16,
                  fontweight="bold", color=_TEXT, pad=12)
     ax.set_xlim(0, max(d_c[-1], d_o[-1]) / 1000)
-    ax.set_ylim(0, None)
+    ax.set_ylim(0, VMAX * 3.6 * 1.06)   # techo = VMAX + 6% de aire
     ax.grid(True, alpha=0.25, color=_GRID, linewidth=0.8)
 
     leg = ax.legend(loc="upper right", fontsize=12, framealpha=0.95,

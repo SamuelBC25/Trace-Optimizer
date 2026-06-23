@@ -6,16 +6,10 @@ import numpy as np
 from scipy.interpolate import Akima1DInterpolator
 
 # -----------------------------------------------------------------------------
-# PARÁMETROS FÍSICOS GLOBALES
+# PARÁMETROS — importados desde el punto único de configuración (config.py)
 # -----------------------------------------------------------------------------
-MU    = 0.8     # Coeficiente de fricción neumático–pista
-G     = 9.81    # Aceleración gravitacional (m/s²)
-VMAX  = 100.0    # Velocidad máxima F1 en curva: ~360 km/h ≈ 100 m/s
-
-# Parámetros de factibilidad de la trayectoria
-SAFETY_MARGIN  = 0.5    # margen al borde (m): mantiene el carro dentro de pista
-PENALTY_WEIGHT = 0.10   # peso de la penalización por salirse (por metro·muestra)
-OVERSAMPLE     = 5      # densidad de muestreo de la trayectoria reconstruida
+from config import (MU, G, VMAX,
+                    SAFETY_MARGIN, PENALTY_WEIGHT, OVERSAMPLE)
 
 # -----------------------------------------------------------------------------
 # 1. CARGA DE PISTA
@@ -315,6 +309,41 @@ def velocity_profile(traj_x, traj_y):
     area = 0.5 * np.abs(xp*(traj_y - yn) + traj_x*(yn - yp) + xn*(yp - traj_y))
     r = np.where(area < 1e-9, 1e9, a * b * c / (4 * area + 1e-12))
     vels = np.minimum(np.sqrt(MU * G * r), VMAX) * 3.6
+    seg = np.hypot(np.diff(traj_x), np.diff(traj_y))
+    dists = np.concatenate([[0.0], np.cumsum(seg)])
+    return dists, vels
+
+
+def velocity_profile_smooth(traj_x, traj_y, window=41):
+    """
+    Igual que velocity_profile pero suaviza la CURVATURA antes de calcular la
+    velocidad (mediana móvil periódica de ventana `window`).
+
+    Mismo modelo físico  v = min(sqrt(μ·g·r), VMAX)  —no cambia nada del
+    AG ni de los datos del tiempo de vuelta—; sólo limpia los picos numéricos
+    que produce el radio de 3 puntos en alta resolución, para que la curva sea
+    LEGIBLE (alta en recta, baja suave en curva). Es para graficar.
+    Retorna (distancias_m, velocidades_kmh).
+    """
+    xp, yp = np.roll(traj_x, 1), np.roll(traj_y, 1)
+    xn, yn = np.roll(traj_x, -1), np.roll(traj_y, -1)
+    a = np.hypot(traj_x - xn, traj_y - yn)
+    b = np.hypot(xp - xn, yp - yn)
+    c = np.hypot(xp - traj_x, yp - traj_y)
+    area = 0.5 * np.abs(xp*(traj_y - yn) + traj_x*(yn - yp) + xn*(yp - traj_y))
+    r = np.where(area < 1e-9, 1e9, a * b * c / (4 * area + 1e-12))
+    kappa = 1.0 / r
+
+    w = max(3, int(window))
+    if w % 2 == 0:
+        w += 1
+    if w < len(kappa):
+        pad = w // 2
+        kp = np.pad(kappa, pad, mode="wrap")          # periódico: es un circuito
+        kappa = np.array([np.median(kp[i:i + w]) for i in range(len(kappa))])
+
+    r_s = 1.0 / np.maximum(kappa, 1e-9)
+    vels = np.minimum(np.sqrt(MU * G * r_s), VMAX) * 3.6
     seg = np.hypot(np.diff(traj_x), np.diff(traj_y))
     dists = np.concatenate([[0.0], np.cumsum(seg)])
     return dists, vels
