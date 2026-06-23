@@ -16,8 +16,7 @@ modifícalo SOLO en este archivo. El resto de módulos lo importa desde aquí.
 # -----------------------------------------------------------------------------
 MU   = 0.8      # Coeficiente de fricción neumático–pista
 G    = 9.81     # Aceleración gravitacional (m/s²)
-VMAX = 83.0     # Velocidad máxima en recta (m/s).  83.0 ≈ 300 km/h
-                # ↑ cámbiala aquí a 100.0 si quieres ~360 km/h. UNA sola vez.
+VMAX = 100.0     # Velocidad máxima en recta (m/s).  100.0 ≈ 360 km/h   
 
 # -----------------------------------------------------------------------------
 # FACTIBILIDAD DE LA TRAYECTORIA
