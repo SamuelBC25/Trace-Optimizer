@@ -21,10 +21,10 @@ import config as C
 
 @dataclass
 class GAConfig:
-    """Parámetros del Algoritmo Genético.
-
-    Los valores por defecto se leen desde config.py (punto único de
-    configuración). NO los cambies aquí: edítalos en config.py.
+    """
+    Parámetros del Algoritmo Genético.
+    Se pueden modificar en config.py (POP_SIZE, N_GENERATIONS, PC, PM, ETA_C, ETA_M,
+    TOURNAMENT_K, SEED, VERBOSE, MAX_EVALS, PATIENCE, TOLERANCE) o al instanciar GAConfig.
     """
     pop_size:       int   = C.POP_SIZE
     n_generations:  int   = C.N_GENERATIONS
@@ -36,6 +36,9 @@ class GAConfig:
     seed:           int   = C.SEED
     verbose:        bool  = C.VERBOSE
     max_evals:      int   = C.MAX_EVALS
+    # Parámetros para convergencia (early stopping)
+    patience:       int   = C.PATIENCE
+    tolerance:      float = C.TOLERANCE
 
 # -----------------------------------------------------------------------------
 # ESTRUCTURA DE RESULTADOS
@@ -49,7 +52,7 @@ class GAResult:
     history:      list = field(default_factory=list)  # Mejor fitness por generación
     n_evals:      int  = 0              # Evaluaciones usadas
     n_gen:        int  = 0              # Generaciones ejecutadas
-
+    converged_at_gen: int = 0
 
 # -----------------------------------------------------------------------------
 # OPERADORES DEL ALGORITMO GENÉTICO
@@ -151,11 +154,17 @@ def run_ga(objective, lb, ub, config=None, callback=None):
     best_fitness = fitness[best_idx]
     history      = [best_fitness]
     gen          = 0
-
+    # Variable para Early Stopping
+    gens_without_improvement = 0
+    converged_at_gen = 0
+    
     if config.verbose:
         print(f"  Gen 000 | Best: {best_fitness:.4f}s | Evals: {n_evals}")
 
     # Bucle principal del AG: selección, cruce, mutación y reemplazo elitista.
+    # 1. Inicializa el contador ANTES de que empiece el ciclo while
+    gens_without_improvement = 0 
+    
     while n_evals < max_evals:
         new_pop     = []
         new_fitness = []
@@ -193,13 +202,35 @@ def run_ga(objective, lb, ub, config=None, callback=None):
         fitness = np.array(new_fitness)
         gen    += 1
 
-        # Actualizar el mejor individuo global  
+        # 2. Actualizar el mejor individuo global y Parada Temprana  
         idx = np.argmin(fitness)
+        improved = False
+        
         if fitness[idx] < best_fitness:
+            # Revisamos si la mejora supera la tolerancia configurada
+            if config.patience is not None and (best_fitness - fitness[idx]) >= config.tolerance:
+                improved = True
+                
             best_fitness = fitness[idx]
             best_u       = pop[idx].copy()
+            
         history.append(best_fitness)
 
+        # Lógica de Early Stopping (Convergencia)
+        if config.patience is not None:
+            if improved:
+                gens_without_improvement = 0 # Se reinicia el contador si mejoró lo suficiente
+                converged_at_gen = gen
+            else:
+                gens_without_improvement += 1 # Aumenta si la mejora fue minúscula o nula
+                
+            # Si superamos la paciencia, rompemos el ciclo while
+            if gens_without_improvement >= config.patience:
+                if config.verbose:
+                    print(f"  [Convergencia] Alcanzada en gen {gen:03d} (sin mejora de {config.tolerance}s en {config.patience} gens).")
+                break
+
+        # (El resto queda igual)
         if callback:
             callback(gen, best_fitness, best_u)
 

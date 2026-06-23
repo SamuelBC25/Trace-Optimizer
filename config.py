@@ -39,6 +39,10 @@ TOURNAMENT_K  = 2        # Tamaño del torneo
 SEED          = None     # Semilla aleatoria (None = aleatoria)
 VERBOSE       = True     # Imprimir progreso
 MAX_EVALS     = None   # Número máximo de evaluaciones
+# --- PARÁMETROS PARA CONVERGENCIA (EARLY STOPPING) ---
+PATIENCE      = 50        # Generaciones sin mejora antes de detenerse (None para desactivar)
+TOLERANCE     = 1e-4      # Mejora mínima en segundos para considerar que no ha estancado (0.0001 = 0.1 ms)
+
 
 # -----------------------------------------------------------------------------
 # PIPELINE (pistas, control points, corridas, salidas)
