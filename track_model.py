@@ -10,7 +10,7 @@ from scipy.interpolate import Akima1DInterpolator
 # -----------------------------------------------------------------------------
 MU    = 0.8     # Coeficiente de fricción neumático–pista
 G     = 9.81    # Aceleración gravitacional (m/s²)
-VMAX  = 83.0    # Velocidad máxima F1 en curva: ~300 km/h ≈ 83 m/s
+VMAX  = 100.0    # Velocidad máxima F1 en curva: ~360 km/h ≈ 100 m/s
 
 # Parámetros de factibilidad de la trayectoria
 SAFETY_MARGIN  = 0.5    # margen al borde (m): mantiene el carro dentro de pista
@@ -253,6 +253,37 @@ def control_bounds(ctrl, margin=SAFETY_MARGIN):
     lb = -(ctrl["dI"] - margin)
     ub =  (ctrl["dE"] - margin)
     return lb, ub
+
+
+def objective_function_ctrl_only(u, ctrl, penalty=PENALTY_WEIGHT,
+                                 margin=SAFETY_MARGIN, oversample=OVERSAMPLE):
+    """
+    Variante COMPARATIVA de la función objetivo.
+
+    Diferencia con objective_function: la penalización por salirse de pista
+    se mide ÚNICAMENTE en los N_CTRL puntos de control (igual que
+    control_bounds), en vez de en los N*oversample puntos de la trayectoria
+    interpolada (Akima) completa.
+
+    El tiempo de vuelta T se sigue calculando sobre la trayectoria
+    reconstruida en alta resolución (el carro físicamente recorre esa
+    curva), igual que en objective_function. Lo único que cambia es DÓNDE
+    se mide la violación que alimenta la penalización.
+
+    Existe para poder comparar empíricamente:
+      - objective_function           → penaliza en toda la interpolación
+      - objective_function_ctrl_only → penaliza solo en los control points
+    """
+    tx, ty, u_f, dE, dI = reconstruct_with_offset(ctrl, u, oversample)
+    T = _lap_time_vec(tx, ty)
+    if penalty > 0:
+        u_arr = np.asarray(u, float)
+        lb, ub = control_bounds(ctrl, margin=margin)
+        over  = np.maximum(0.0, u_arr - ub)
+        under = np.maximum(0.0, lb - u_arr)
+        viol = float((over + under).sum())
+        T *= (1.0 + penalty * viol)
+    return T
 
 # -----------------------------------------------------------------------------
 # 6. UTILIDADES

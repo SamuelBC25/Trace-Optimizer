@@ -1,0 +1,22 @@
+COMPARATIVA — Zandvoort
+Penalización en TODA la interpolación (FULL) vs SOLO en los control points (CTRL_ONLY)
+==============================================================================
+
+Métrica                                       FULL             CTRL_ONLY
+------------------------------------------------------------------------------
+Tiempo línea central (s)                    86.977                86.977
+Tiempo real mejor sol. (s)                  86.677                86.662
+Fitness c/ penalización (s)                 86.677                86.662
+Media fitness (s)                           86.697                86.689
+σ fitness (s)                                0.011                 0.019
+Violación total real (m)                      0.00                  0.00
+Violación máxima real (m)                    0.000                 0.000
+Tiempo de cómputo (s)                        231.8                 156.3
+
+Mejora real vs línea central — FULL:        0.34 %
+Mejora real vs línea central — CTRL_ONLY:   0.36 %
+
+Nota: 'Tiempo real' y 'Violación' se miden SIEMPRE sobre la trayectoria
+interpolada completa (N*oversample puntos), independientemente de qué
+función objetivo se usó para optimizar. Esto permite comparar de forma
+justa qué tanto se sale de pista cada estrategia en la práctica.

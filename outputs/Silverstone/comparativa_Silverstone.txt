@@ -1,0 +1,22 @@
+COMPARATIVA — Silverstone
+Penalización en TODA la interpolación (FULL) vs SOLO en los control points (CTRL_ONLY)
+==============================================================================
+
+Métrica                                       FULL             CTRL_ONLY
+------------------------------------------------------------------------------
+Tiempo línea central (s)                   106.283               106.283
+Tiempo real mejor sol. (s)                 105.820               105.831
+Fitness c/ penalización (s)                105.820               105.831
+Media fitness (s)                          105.854               105.850
+σ fitness (s)                                0.017                 0.019
+Violación total real (m)                      0.00                  0.00
+Violación máxima real (m)                    0.000                 0.000
+Tiempo de cómputo (s)                        413.4                 297.2
+
+Mejora real vs línea central — FULL:        0.44 %
+Mejora real vs línea central — CTRL_ONLY:   0.43 %
+
+Nota: 'Tiempo real' y 'Violación' se miden SIEMPRE sobre la trayectoria
+interpolada completa (N*oversample puntos), independientemente de qué
+función objetivo se usó para optimizar. Esto permite comparar de forma
+justa qué tanto se sale de pista cada estrategia en la práctica.

@@ -227,8 +227,8 @@ def plot_track_result(geo, ctrl, u_opt, track_name, t_center, t_opt,
     # -- Raceline optimizada (rojo, sólida gruesa) ----------------------------
     tx, ty = reconstruct_trajectory(ctrl, u_opt)
     tx_c, ty_c = _close_loop(tx, ty)
-    ax.plot(tx_c, ty_c, color=_RACING, lw=3.6, alpha=0.95, zorder=5,
-            path_effects=[pe.Stroke(linewidth=6.0, foreground="white", alpha=0.5),
+    ax.plot(tx_c, ty_c, color=_RACING, lw=1.5, alpha=0.95, zorder=5,
+            path_effects=[pe.Stroke(linewidth=4.0, foreground="white", alpha=0.5),
                           pe.Normal()],
             label=f"Optimizada   ({t_opt:.3f} s)")
 

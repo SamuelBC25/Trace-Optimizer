@@ -1,0 +1,22 @@
+COMPARATIVA — Spa
+Penalización en TODA la interpolación (FULL) vs SOLO en los control points (CTRL_ONLY)
+==============================================================================
+
+Métrica                                       FULL             CTRL_ONLY
+------------------------------------------------------------------------------
+Tiempo línea central (s)                   121.617               121.617
+Tiempo real mejor sol. (s)                 121.110               121.108
+Fitness c/ penalización (s)                121.110               121.108
+Media fitness (s)                          121.150               121.151
+σ fitness (s)                                0.029                 0.023
+Violación total real (m)                      0.00                  0.00
+Violación máxima real (m)                    0.000                 0.000
+Tiempo de cómputo (s)                        238.5                 204.2
+
+Mejora real vs línea central — FULL:        0.42 %
+Mejora real vs línea central — CTRL_ONLY:   0.42 %
+
+Nota: 'Tiempo real' y 'Violación' se miden SIEMPRE sobre la trayectoria
+interpolada completa (N*oversample puntos), independientemente de qué
+función objetivo se usó para optimizar. Esto permite comparar de forma
+justa qué tanto se sale de pista cada estrategia en la práctica.
